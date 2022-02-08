@@ -126,7 +126,7 @@ def uniformCostSearch(problem):
     currentState = problem.getStartState()
     futureStack = util.PriorityQueue()
     currentCost = 0
-    while True:
+    while not problem.isGoalState(currentState):
         pastNodes.push(currentState)
         for node in problem.getSuccessors(currentState):
             point, direction, cost = node
@@ -139,8 +139,7 @@ def uniformCostSearch(problem):
                         routes[str(point)] = [currentState, direction, cost]
         currentState = futureStack.pop()
         currentCost = problem.getCostOfActions(getActionListCost(problem, currentState, routes))
-        if problem.isGoalState(currentState):
-            return getActionListCost(problem, currentState, routes)
+    return getActionListCost(problem, currentState, routes)
 
 def nullHeuristic(state, problem=None):
     """
@@ -151,8 +150,25 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-
-
+    pastNodes = util.Stack()
+    routes = {}
+    currentState = problem.getStartState()
+    futureStack = util.PriorityQueue()
+    currentCost = 0
+    while not problem.isGoalState(currentState):
+        pastNodes.push(currentState)
+        for node in problem.getSuccessors(currentState):
+            point, direction, cost = node
+            cost += heuristic(point, problem) + currentCost
+            if point not in pastNodes.list and point not in futureStack.heap:
+                futureStack.update(point, cost)
+                if point not in routes.keys():
+                    routes[str(point)] = [currentState, direction, cost]
+                elif routes[str(point)][2] > cost:
+                    routes[str(point)] = [currentState, direction, cost]
+        currentState = futureStack.pop()
+        currentCost = problem.getCostOfActions(getActionListCost(problem, currentState, routes))
+    return getActionListCost(problem, currentState, routes)
 
 def getActionList(problem, currentState, routes):
     actions = []
@@ -170,15 +186,7 @@ def getActionListCost(problem, currentState, routes):
     actions.reverse()
     return actions
 
-def getHeurRouteValue(problem, currentState, routes, heuristic):
-    cost = 0
-    while currentState != problem.getStartState():
-        cost += heuristic(currentState, problem)
-        currentState, action, _ = routes[str(currentState)]
-    return cost
         
-
-
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
