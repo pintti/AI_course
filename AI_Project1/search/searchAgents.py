@@ -34,6 +34,7 @@ description for details.
 Good luck and happy searching!
 """
 
+from ctypes import pointer
 from game import Directions
 from game import Agent
 from game import Actions
@@ -290,30 +291,21 @@ class CornersProblem(search.SearchProblem):
         # in initializing the problem
         self.mCorners = []
         for corner in self.corners:
-            self.mCorners.append(corner) 
+            self.mCorners.append(corner)
+        self.cornerIndex = [0, 0, 0, 0]
 
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        if self.pos == self.startingPosition:
-            return self.startingPosition
-        else:
-            return self.pos
+        return [self.startingPosition, [0,0,0,0]]
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        if state in self.mCorners:
-            print(self.mCorners)
-            if len(self.mCorners) == 1:
-                return True
-            else:
-                self.mCorners.remove(state)
-                self.startingPosition = state
-                return True
+        return 0 not in state[1]
 
     def getSuccessors(self, state):
         """
@@ -325,8 +317,12 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
         successors = []
+        newState = state[1][:]
+        if state[0] in self.mCorners:
+            index = self.mCorners.index(state[0])
+            newState[index] = 1
+
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
@@ -334,14 +330,15 @@ class CornersProblem(search.SearchProblem):
             #   dx, dy = Actions.directionToVector(action)
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
-
-            x,y = state
+            x,y = state[0]
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
+            if newState.count(1) == 4:
+                successors.append(([(nextx, nexty), newState], None, 1))
             if not self.walls[nextx][nexty]:
-                successors.append(((nextx, nexty), action, 1))
-
-
+                successors.append(([(nextx, nexty), newState], action, 1))
+            
+        
         self._expanded += 1 # DO NOT CHANGE
         return successors
 

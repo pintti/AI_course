@@ -17,6 +17,7 @@ In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
 
+from errno import ESTALE
 from queue import PriorityQueue
 from re import search
 from tokenize import ContStr
@@ -103,21 +104,31 @@ def depthFirstSearch(problem):
         currentState = futureStack.pop()
     return getActionList(problem, currentState, routes)
 
+
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     pastNodes = util.Stack()
-    routes = {}
-    currentState = problem.getStartState()
-    futureStack = util.Queue()
-    while not problem.isGoalState(currentState):
-        pastNodes.push(currentState)
-        for node in problem.getSuccessors(currentState):
-            point, direction, cost = node
-            if point not in pastNodes.list and point not in futureStack.list:
-                futureStack.push(point)
-                routes[str(point)] = [currentState, direction]
-        currentState = futureStack.pop()
-    return getActionList(problem, currentState, routes)
+    futureNodes = util.Queue()
+    futureNodes.push((problem.getStartState(), "", 0))
+    routes = {str(problem.getStartState()): [None, []]}
+    while True:
+        if not futureNodes: return False
+        node = futureNodes.pop()
+        point, direction, cost = node
+        if problem.isGoalState(point):
+            return routes[str(point)][1]
+        if point not in pastNodes.list:
+            pastNodes.push(node[0])
+            for childNode in problem.getSuccessors(point):
+                childPoint, childDir, childCost = childNode
+                if childPoint not in pastNodes.list:
+                    if str(childPoint) not in routes.keys():
+                        routes[str(childPoint)] = [point, routes[str(point)][1][:]]
+                        if childDir:
+                            routes[str(childPoint)][1].append(childDir)
+                        futureNodes.push(childNode)
+
+        
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
@@ -183,6 +194,16 @@ def getActionListCost(problem, currentState, routes):
     while currentState != problem.getStartState():
         currentState, action, _ = routes[str(currentState)]
         actions.append(action)
+    actions.reverse()
+    return actions
+
+def getPastList(start, state, routes):
+    actions = []
+    actions.append(routes[str(state)][1])
+    while state != start:
+        state, action = routes[str(state)]
+        if action:
+            actions.append(action)
     actions.reverse()
     return actions
 
