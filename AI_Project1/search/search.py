@@ -161,7 +161,7 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    pastNodes = util.Stack()
+    """pastNodes = util.Stack()
     routes = {}
     currentState = problem.getStartState()
     futureStack = util.PriorityQueue()
@@ -179,7 +179,30 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                     routes[str(point)] = [currentState, direction, cost]
         currentState = futureStack.pop()
         currentCost = problem.getCostOfActions(getActionListCost(problem, currentState, routes))
-    return getActionListCost(problem, currentState, routes)
+    return getActionListCost(problem, currentState, routes)"""
+    pastNodes = util.Stack()
+    futureNodes = util.PriorityQueue()
+    futureNodes.push((problem.getStartState(), "", 0), 0)
+    routes = {str((problem.getStartState(), "", 0)): [None, [], 0]}
+    while True:
+        if not futureNodes: return False
+        node = futureNodes.pop()
+        point, direction, cost = node
+        #print(routes)
+        cost = routes[str(node)][2]
+        if problem.isGoalState(point):
+            return routes[str(node)][1]
+        if point not in pastNodes.list:
+            pastNodes.push(node[0])
+            for childNode in problem.getSuccessors(point):
+                childPoint, childDir, childCost = childNode
+                if childPoint not in pastNodes.list:
+                    if str(childNode) not in routes.keys():
+                        routes[str(childNode)] = [point, routes[str(node)][1][:], cost+childCost]
+                        if childDir:
+                            routes[str(childNode)][1].append(childDir)
+                        futureNodes.update(childNode, cost+childCost+heuristic(childPoint, problem))
+
 
 def getActionList(problem, currentState, routes):
     actions = []
